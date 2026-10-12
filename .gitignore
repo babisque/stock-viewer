@@ -1,0 +1,18 @@
+node_modules/
+dist/
+*.tsbuildinfo
+coverage/
+
+# SQLite databases
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.db.bak
+
+# Environment files
+.env
+.env.*
+
+# Generated Prisma client
+apps/api/src/generated/

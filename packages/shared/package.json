@@ -1,0 +1,16 @@
+{
+  "name": "@stock-viewer/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "decimal.js": "10.6.0",
+    "zod": "4.6.6"
+  }
+}
