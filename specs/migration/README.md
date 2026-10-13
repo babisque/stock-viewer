@@ -9,8 +9,8 @@ The port is about **behaviour parity**. It adds no new features. Each migration 
 
 | Phase | Spec | Goal | Status |
 |---|---|---|---|
-| M1 | [m1-foundation.md](m1-foundation.md) | Solution + Aspire scaffold, shared domain library (money, calculations, validation, contracts), EF Core schema | Not started |
-| M2 | [m2-api-parity.md](m2-api-parity.md) | Minimal API with the exact same REST contract as the Node API, price providers, FX, cache | Not started |
+| M1 | [m1-foundation.md](m1-foundation.md) | Solution + Aspire scaffold, shared domain library (money, calculations, validation, contracts), EF Core schema | Done |
+| M2 | [m2-api-parity.md](m2-api-parity.md) | Minimal API with the exact same REST contract as the Node API, price providers, FX, cache | In progress |
 | M3 | [m3-blazor-ui.md](m3-blazor-ui.md) | Blazor UI with the same features and UX rules as the React app | Not started |
 | M4 | [m4-cutover.md](m4-cutover.md) | Import existing data, remove the Node code, rewrite CLAUDE.md | Not started |
 
