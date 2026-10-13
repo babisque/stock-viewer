@@ -16,3 +16,11 @@ coverage/
 
 # Generated Prisma client
 apps/api/src/generated/
+
+# .NET
+bin/
+obj/
+*.user
+.vs/
+TestResults/
+src/StockViewer.Api/data/

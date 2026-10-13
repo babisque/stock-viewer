@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/StockViewer.AppHost/StockViewer.AppHost.csproj" />
+    <Project Path="src/StockViewer.ServiceDefaults/StockViewer.ServiceDefaults.csproj" />
+    <Project Path="src/StockViewer.Shared/StockViewer.Shared.csproj" />
+    <Project Path="src/StockViewer.Api/StockViewer.Api.csproj" />
+    <Project Path="src/StockViewer.Web/StockViewer.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/StockViewer.Shared.Tests/StockViewer.Shared.Tests.csproj" />
+    <Project Path="tests/StockViewer.Api.Tests/StockViewer.Api.Tests.csproj" />
+  </Folder>
+</Solution>

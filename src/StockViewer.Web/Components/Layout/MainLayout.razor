@@ -1,0 +1,24 @@
+@inherits LayoutComponentBase
+
+<div class="page">
+    <header class="header">
+        <h1 class="title">stock-viewer</h1>
+        <div class="actions">
+            <div role="group" aria-label="Theme" class="segmented" data-placeholder>
+                <button type="button" aria-pressed="true" disabled>System</button>
+                <button type="button" aria-pressed="false" disabled>Light</button>
+                <button type="button" aria-pressed="false" disabled>Dark</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        @Body
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>

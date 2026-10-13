@@ -1,0 +1,38 @@
+root = true
+
+[*]
+charset = utf-8
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.{cs,razor}]
+indent_size = 4
+
+[*.{csproj,props,targets,slnx}]
+indent_size = 2
+
+[*.cs]
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = true:suggestion
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_prefer_braces = when_multiline:suggestion
+csharp_using_directive_placement = outside_namespace:warning
+dotnet_sort_system_directives_first = true
+
+# CA1716 flags "Shared" as a VB keyword. The solution is C#-only and the
+# spec fixes the StockViewer.Shared namespace.
+dotnet_diagnostic.CA1716.severity = none
+
+# Tests: descriptive names like Derive_RejectsBackdatedSell, and xUnit needs
+# public test classes even though the test project is an executable.
+[tests/**.cs]
+dotnet_diagnostic.CA1707.severity = none
+dotnet_diagnostic.CA1515.severity = none
+
+# EF Core migrations are generated code.
+[src/StockViewer.Api/Data/Migrations/**.cs]
+generated_code = true
