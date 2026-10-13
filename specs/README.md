@@ -9,6 +9,9 @@ Each phase has its own spec. A phase is only started after the previous one meet
 | 3 | [phase-3-dashboard.md](phase-3-dashboard.md) | Portfolio dashboard: totals, allocation chart, auto-refresh | Done (pending manual UI check) |
 | 4 | [phase-4-transactions.md](phase-4-transactions.md) | Buy/sell history, automatic average price, realized profit | Done (pending manual UI check) |
 
+## Migration to .NET
+The app is being ported to .NET 10 + Aspire + minimal APIs + Blazor Web App, with the same features and REST contract. See [migration/README.md](migration/README.md) for the M1–M4 roadmap. While the port is in progress, the Node app above stays the working version, and new feature phases wait until the migration is done.
+
 ## Future ideas (no spec yet)
 - Dividends / JCP tracking
 - Brazilian income tax (IR) helper: monthly sales, R$20k exemption, DARF
