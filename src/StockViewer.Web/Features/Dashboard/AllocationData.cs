@@ -50,7 +50,7 @@ public sealed record AllocationData(IReadOnlyList<ChartSlice> Slices, string? No
             position.Currency,
             position.CurrentValue));
         // Without a rate every item is already in `currency`, so the rate is unused.
-        var slices = Allocation.GroupOther(Allocation.Slices(items, currency, rate ?? 1m), MaxSlices);
+        var slices = KeepColoredSlots(Allocation.Slices(items, currency, rate ?? 1m));
 
         // Colours follow the position, not its rank: slots go in portfolio order, so two positions swapping
         // places doesn't repaint the chart.
@@ -69,6 +69,27 @@ public sealed record AllocationData(IReadOnlyList<ChartSlice> Slices, string? No
                 slice,
                 slice.Key == Allocation.OtherKey ? ChartPalette.OtherSlot : colored.IndexOf(slice.Key)))],
             note.Length == 0 ? null : note);
+    }
+
+    /// <summary>
+    /// The palette has <see cref="ChartPalette.SlotCount"/> colours and never cycles, so from SlotCount + 1 slices on,
+    /// the SlotCount largest keep a colour and the rest become "Other", even when that is a single position.
+    /// (<see cref="Allocation.GroupOther"/> keeps all <see cref="MaxSlices"/> slices when there are exactly that many,
+    /// which needed an 8th colour.)
+    /// </summary>
+    private static IReadOnlyList<AllocationSlice> KeepColoredSlots(IReadOnlyList<AllocationSlice> slices)
+    {
+        if (slices.Count <= ChartPalette.SlotCount)
+        {
+            return slices;
+        }
+        var rest = slices.Skip(ChartPalette.SlotCount).ToList();
+        var other = new AllocationSlice(
+            Allocation.OtherKey,
+            "Other",
+            rest.Sum(slice => slice.Value),
+            rest.Sum(slice => slice.Percent));
+        return [.. slices.Take(ChartPalette.SlotCount), other];
     }
 
     private static ChartSlice ToChartSlice(AllocationSlice slice, int colorSlot) =>

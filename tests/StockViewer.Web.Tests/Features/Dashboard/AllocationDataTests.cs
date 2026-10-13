@@ -67,6 +67,28 @@ public class AllocationDataTests
         Assert.Equal(Enumerable.Range(0, 7), data.Slices.Take(7).Select(slice => slice.ColorSlot));
     }
 
+    [Theory]
+    [InlineData(7, 7, false)]
+    [InlineData(8, 8, true)]
+    [InlineData(9, 8, true)]
+    public void Positions_never_get_more_coloured_slices_than_the_palette_has(int positionCount, int sliceCount, bool hasOther)
+    {
+        var positions = Enumerable.Range(0, positionCount)
+            .Select(index => Fixtures.PortfolioPosition() with { Id = $"p{index}", Ticker = $"T{index}", CurrentValue = 100 - index })
+            .ToArray();
+
+        var data = AllocationData.ForPositions(Fixtures.Portfolio(positions), Currency.BRL);
+
+        Assert.Equal(sliceCount, data.Slices.Count);
+        Assert.Equal(hasOther, data.Slices[^1].ColorSlot == ChartPalette.OtherSlot);
+        Assert.All(data.Slices, slice => ChartPalette.Color(slice.ColorSlot, dark: false));
+        if (positionCount == 8)
+        {
+            // Exactly one position past the 7 largest: it still goes into "Other", never into an 8th colour.
+            Assert.Equal(("Other", 93m), (data.Slices[^1].Label, data.Slices[^1].Value));
+        }
+    }
+
     [Fact]
     public void Colours_follow_the_portfolio_order_not_the_size_rank()
     {
