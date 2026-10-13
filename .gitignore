@@ -1,25 +1,18 @@
-node_modules/
-dist/
-*.tsbuildinfo
-coverage/
-
-# SQLite databases
-*.db
-*.db-journal
-*.db-wal
-*.db-shm
-*.db.bak
-
-# Environment files
-.env
-.env.*
-
-# Generated Prisma client
-apps/api/src/generated/
-
-# .NET
+# .NET build output
 bin/
 obj/
-*.user
-.vs/
 TestResults/
+
+# IDE
+.vs/
+*.user
+
+# SQLite databases and their backups/journals
+*.db*
+
+# Environment files (use user-secrets for tokens)
+.env*
+
+# Exports with personal financial data (root-anchored: a bare data/ would also
+# match src/StockViewer.Api/Data/ on case-insensitive file systems)
+/data/

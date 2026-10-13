@@ -1,5 +1,7 @@
 # stock-viewer — Migration to .NET (roadmap)
 
+> **Completed.** M4 removed the Node/TypeScript code (`apps/`, `packages/`, npm tooling); the repo is .NET-only. There was no real Node data to import, so the import tool ran as a rehearsal on seeded data (parity OK) and was then deleted (it's in git history). The Node paths below are kept as history.
+
 The Node/TypeScript app (Phases 1–4) is being rewritten on .NET 10:
 - **Aspire** orchestrates the projects.
 - **Minimal APIs** serve the backend.
@@ -10,9 +12,9 @@ The port is about **behaviour parity**. It adds no new features. Each migration 
 | Phase | Spec | Goal | Status |
 |---|---|---|---|
 | M1 | [m1-foundation.md](m1-foundation.md) | Solution + Aspire scaffold, shared domain library (money, calculations, validation, contracts), EF Core schema | Done |
-| M2 | [m2-api-parity.md](m2-api-parity.md) | Minimal API with the exact same REST contract as the Node API, price providers, FX, cache | In progress |
+| M2 | [m2-api-parity.md](m2-api-parity.md) | Minimal API with the exact same REST contract as the Node API, price providers, FX, cache | Done |
 | M3 | [m3-blazor-ui.md](m3-blazor-ui.md) | Blazor UI with the same features and UX rules as the React app | Done (pending manual UI check) |
-| M4 | [m4-cutover.md](m4-cutover.md) | Import existing data, remove the Node code, rewrite CLAUDE.md | Not started |
+| M4 | [m4-cutover.md](m4-cutover.md) | Import existing data, remove the Node code, rewrite CLAUDE.md | Done |
 
 ## Decisions (already taken, don't revisit without asking)
 - **Database:** SQLite + EF Core. No database container. Aspire runs only `api` and `web`.
