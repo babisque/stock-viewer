@@ -1,0 +1,18 @@
+.skeleton {
+    min-height: 1rem;
+    border-radius: var(--radius-md);
+    background: var(--accent);
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton {
+        animation: none;
+    }
+}

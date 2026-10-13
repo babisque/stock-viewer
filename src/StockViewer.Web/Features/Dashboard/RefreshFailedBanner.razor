@@ -1,0 +1,10 @@
+@* Port of RefreshFailedBanner in RefreshControl.tsx: shown when a refresh fails but older data is still on screen. *@
+@inherits CooldownComponentBase
+
+<div role="alert" class="banner">
+    <Icons Name="IconName.Warning" />
+    <span class="banner-text">Couldn't refresh — showing data from @LastUpdatedTime.</span>
+    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" Disabled="IsRefreshing || Remaining > 0" OnClick="OnRefresh">
+        @(Remaining > 0 ? $"Try again in {Remaining}s" : "Try again")
+    </Button>
+</div>

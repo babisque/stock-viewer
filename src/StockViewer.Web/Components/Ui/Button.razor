@@ -1,0 +1,31 @@
+@* Port of components/ui/button.tsx. Extra attributes (aria-label, form, …) pass through to the <button>. *@
+<button @attributes="Attributes"
+        type="@Type"
+        class="btn btn-@VariantClass btn-size-@SizeClass @Class"
+        disabled="@Disabled"
+        @onclick="OnClick">
+    @ChildContent
+</button>
+
+@code {
+    [Parameter] public ButtonVariant Variant { get; set; } = ButtonVariant.Default;
+
+    [Parameter] public ButtonSize Size { get; set; } = ButtonSize.Default;
+
+    [Parameter] public string Type { get; set; } = "button";
+
+    [Parameter] public bool Disabled { get; set; }
+
+    [Parameter] public string? Class { get; set; }
+
+    [Parameter] public EventCallback<MouseEventArgs> OnClick { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IReadOnlyDictionary<string, object>? Attributes { get; set; }
+
+    private string VariantClass => Variant.ToString().ToLowerInvariant();
+
+    private string SizeClass => Size.ToString().ToLowerInvariant();
+}

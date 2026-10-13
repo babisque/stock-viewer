@@ -1,0 +1,31 @@
+@* Port of the alert-dialog pattern: Cancel closes, the confirm button does not. The parent closes the dialog once
+   the action succeeds, so an error can be shown inside it (ChildContent). *@
+<Dialog Open="Open" Title="@Title" Description="@Description" Alert="true" OnClose="OnCancel">
+    @ChildContent
+    <div class="confirm-footer">
+        <Button Variant="ButtonVariant.Outline" OnClick="OnCancel">Cancel</Button>
+        <Button Variant="ButtonVariant.Destructive" Disabled="Busy" OnClick="OnConfirm">
+            @(Busy ? BusyText : ConfirmText)
+        </Button>
+    </div>
+</Dialog>
+
+@code {
+    [Parameter] public bool Open { get; set; }
+
+    [Parameter, EditorRequired] public required string Title { get; set; }
+
+    [Parameter] public string? Description { get; set; }
+
+    [Parameter] public string ConfirmText { get; set; } = "Delete";
+
+    [Parameter] public string BusyText { get; set; } = "Deleting…";
+
+    [Parameter] public bool Busy { get; set; }
+
+    [Parameter] public EventCallback OnConfirm { get; set; }
+
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

@@ -1,0 +1,17 @@
+@* Port of PortfolioWarnings.tsx: the Api's warnings (e.g. a position without a price). *@
+@if (Warnings.Count > 0)
+{
+    <div role="alert" class="warnings">
+        <Icons Name="IconName.Warning" />
+        <ul>
+            @foreach (var warning in Warnings)
+            {
+                <li @key="warning">@warning</li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public required IReadOnlyList<string> Warnings { get; set; }
+}

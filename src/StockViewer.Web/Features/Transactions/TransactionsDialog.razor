@@ -1,0 +1,147 @@
+@* Port of TransactionsDialog.tsx. Only the dashboard talks to the Api, so the dialog gets the load/create/delete
+   calls as delegates and keeps its own loading and error state (what useTransactions did in React). *@
+<Dialog Open="Position is not null" Title="@Title" Description="@Description" Size="DialogSize.Lg" OnClose="OnClose">
+    @if (Position is { } position)
+    {
+        <dl class="summary">
+            <div>
+                <dt class="text-muted">Quantity</dt>
+                <dd class="tabular">
+                    @Format.Quantity(position.Quantity, position.Market)
+                    @if (Ledger.IsClosed(position.Quantity))
+                    {
+                        <span class="closed text-muted">(closed)</span>
+                    }
+                </dd>
+            </div>
+            <div>
+                <dt class="text-muted">Avg price</dt>
+                <dd class="tabular">@Format.Money(position.AveragePrice, position.Currency)</dd>
+            </div>
+            <div>
+                <dt class="text-muted">Realized profit</dt>
+                <dd class="tabular @Display.SignClass(position.RealizedProfit)">@Format.SignedMoney(position.RealizedProfit, position.Currency)</dd>
+            </div>
+        </dl>
+
+        <TransactionForm @key="position.Id"
+                         Market="position.Market"
+                         Currency="position.Currency"
+                         Available="position.Quantity"
+                         OnSubmit="CreateAsync" />
+
+        @if (deleteError is not null)
+        {
+            <p role="alert" class="form-error">@deleteError</p>
+        }
+
+        <div class="history">
+            @if (loadError is not null)
+            {
+                <p role="alert" class="form-error">Could not load transactions: @loadError</p>
+            }
+            else if (transactions is null)
+            {
+                <Skeleton Height="6rem" />
+            }
+            else
+            {
+                <TransactionsTable Transactions="transactions"
+                                   Market="position.Market"
+                                   Currency="position.Currency"
+                                   IsDeleting="deleting"
+                                   OnDelete="DeleteAsync" />
+            }
+        </div>
+    }
+</Dialog>
+
+@code {
+    private string? loadedFor;
+    private IReadOnlyList<Transaction>? transactions;
+    private string? loadError;
+    private string? deleteError;
+    private bool deleting;
+
+    /// <summary>Null = closed. Pass the latest portfolio entry, so the summary updates after every change.</summary>
+    [Parameter] public PortfolioPosition? Position { get; set; }
+
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    /// <summary>The position's transactions, oldest first.</summary>
+    [Parameter, EditorRequired] public required Func<string, Task<IReadOnlyList<Transaction>>> LoadTransactions { get; set; }
+
+    /// <summary>Records a transaction for the position (and reloads the portfolio). Throws <see cref="ApiException"/>.</summary>
+    [Parameter, EditorRequired] public required Func<string, CreateTransactionRequest, Task> CreateTransaction { get; set; }
+
+    /// <summary>Deletes a transaction by id (and reloads the portfolio). Throws <see cref="ApiException"/>.</summary>
+    [Parameter, EditorRequired] public required Func<string, Task> DeleteTransaction { get; set; }
+
+    private string Title => Position is null ? "" : $"{Position.Ticker} ({Position.Market}) transactions";
+
+    private string Description => Position is null
+        ? ""
+        : $"Quantity, average price and realized profit are calculated from these buys and sells. Prices and fees are in {Position.Currency}.";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Position?.Id == loadedFor)
+        {
+            return;
+        }
+        loadedFor = Position?.Id;
+        transactions = null;
+        loadError = null;
+        deleteError = null;
+        if (loadedFor is not null)
+        {
+            await LoadAsync(loadedFor);
+        }
+    }
+
+    private async Task LoadAsync(string positionId)
+    {
+        try
+        {
+            var loaded = await LoadTransactions(positionId);
+            if (positionId == loadedFor)
+            {
+                transactions = loaded;
+                loadError = null;
+            }
+        }
+        catch (ApiException error)
+        {
+            if (positionId == loadedFor)
+            {
+                loadError = error.Message;
+            }
+        }
+    }
+
+    private async Task CreateAsync(CreateTransactionRequest request)
+    {
+        var positionId = Position!.Id;
+        await CreateTransaction(positionId, request);
+        await LoadAsync(positionId);
+    }
+
+    private async Task DeleteAsync(Transaction transaction)
+    {
+        deleteError = null;
+        deleting = true;
+        try
+        {
+            await DeleteTransaction(transaction.Id);
+            await LoadAsync(transaction.PositionId);
+        }
+        catch (ApiException error)
+        {
+            deleteError = error.Message;
+        }
+        finally
+        {
+            deleting = false;
+        }
+    }
+}

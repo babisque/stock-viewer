@@ -1,0 +1,74 @@
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.heading {
+    font-weight: 500;
+}
+
+.table-card {
+    padding: 0.25rem 0.5rem;
+}
+
+th.num,
+td.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.sort:hover {
+    color: var(--foreground);
+}
+
+.sort-num {
+    flex-direction: row-reverse;
+}
+
+.sort ::deep svg {
+    width: 0.875rem;
+    height: 0.875rem;
+}
+
+.sort ::deep svg.faint {
+    opacity: 0.4;
+}
+
+.ticker {
+    font-weight: 500;
+}
+
+.unavailable {
+    font-style: italic;
+}
+
+.notes {
+    max-width: 10rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.actions {
+    text-align: right;
+}
+
+.empty {
+    padding: 1.5rem 0;
+    text-align: center;
+}

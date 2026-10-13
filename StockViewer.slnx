@@ -9,5 +9,6 @@
   <Folder Name="/tests/">
     <Project Path="tests/StockViewer.Shared.Tests/StockViewer.Shared.Tests.csproj" />
     <Project Path="tests/StockViewer.Api.Tests/StockViewer.Api.Tests.csproj" />
+    <Project Path="tests/StockViewer.Web.Tests/StockViewer.Web.Tests.csproj" />
   </Folder>
 </Solution>

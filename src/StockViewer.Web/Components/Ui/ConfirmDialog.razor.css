@@ -1,0 +1,12 @@
+.confirm-footer {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+    .confirm-footer {
+        flex-direction: row;
+        justify-content: flex-end;
+    }
+}

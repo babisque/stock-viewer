@@ -1,0 +1,15 @@
+@* Port of ThemeToggle.tsx. *@
+<Segmented TValue="Theme" Label="Theme" Options="options" Value="Value" ValueChanged="ValueChanged" />
+
+@code {
+    private static readonly IReadOnlyList<SegmentedOption<Theme>> options =
+    [
+        new(Theme.System, "System", IconName.Monitor),
+        new(Theme.Light, "Light", IconName.Sun),
+        new(Theme.Dark, "Dark", IconName.Moon),
+    ];
+
+    [Parameter] public Theme Value { get; set; }
+
+    [Parameter] public EventCallback<Theme> ValueChanged { get; set; }
+}

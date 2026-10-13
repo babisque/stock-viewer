@@ -1,0 +1,70 @@
+.dashboard {
+    display: grid;
+    gap: 1.5rem;
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: 1.5rem 1rem;
+}
+
+/* Grid children default to min-width: auto; this keeps the wide table inside its card at 400 px. */
+.dashboard > ::deep * {
+    min-width: 0;
+}
+
+.header {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.header-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.header-row-start {
+    justify-content: flex-start;
+}
+
+.header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.title {
+    font-size: 1.5rem;
+    line-height: 2rem;
+    font-weight: 600;
+}
+
+.charts {
+    display: grid;
+    gap: 1rem;
+}
+
+@media (min-width: 1024px) {
+    .charts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.error-state,
+.empty-state {
+    display: grid;
+    justify-items: center;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+
+.empty-state {
+    gap: 1rem;
+    padding: 2.5rem;
+    border-style: dashed;
+}

@@ -1,0 +1,41 @@
+.table-wrap {
+    position: relative;
+    width: 100%;
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    caption-side: bottom;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+.table ::deep th {
+    height: 2.5rem;
+    padding: 0 0.5rem;
+    text-align: left;
+    vertical-align: middle;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--foreground);
+}
+
+.table ::deep td {
+    padding: 0.5rem;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.table ::deep tr {
+    border-bottom: 1px solid var(--border);
+}
+
+.table ::deep tbody tr:last-child {
+    border-bottom: 0;
+}
+
+.table ::deep tbody tr:hover {
+    background: color-mix(in oklch, var(--muted) 50%, transparent);
+}

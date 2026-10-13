@@ -1,0 +1,26 @@
+.summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+dd {
+    margin: 0;
+    font-weight: 500;
+}
+
+.closed {
+    margin-left: 0.25rem;
+    font-weight: 400;
+}
+
+.history {
+    max-height: 18rem;
+    overflow-y: auto;
+}

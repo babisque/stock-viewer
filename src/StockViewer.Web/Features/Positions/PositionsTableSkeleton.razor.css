@@ -1,0 +1,11 @@
+.table-card {
+    padding: 0.25rem 0.5rem;
+}
+
+th.num {
+    text-align: right;
+}
+
+td {
+    min-width: 4rem;
+}

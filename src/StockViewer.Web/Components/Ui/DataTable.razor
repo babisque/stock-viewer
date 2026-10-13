@@ -1,0 +1,14 @@
+@* Port of components/ui/table.tsx. The wrapper scrolls horizontally, so a wide table never scrolls the page. *@
+<div class="table-wrap">
+    <table @attributes="Attributes" class="table">
+        @ChildContent
+    </table>
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>aria-label, aria-busy, …</summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IReadOnlyDictionary<string, object>? Attributes { get; set; }
+}

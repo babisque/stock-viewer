@@ -1,0 +1,20 @@
+@* A text input bound to a string form model. Updates on every keystroke (like React Hook Form's watch), and
+   InputBase adds aria-invalid while the field has validation messages. *@
+@inherits InputBase<string>
+
+<input @attributes="AdditionalAttributes"
+       class="input @CssClass"
+       value="@CurrentValueAsString"
+       @oninput="args => CurrentValueAsString = (string?)args.Value" />
+
+@code {
+    protected override bool TryParseValueFromString(
+        string? value,
+        out string result,
+        [System.Diagnostics.CodeAnalysis.NotNullWhen(false)] out string? validationErrorMessage)
+    {
+        result = value ?? "";
+        validationErrorMessage = null;
+        return true;
+    }
+}

@@ -26,6 +26,8 @@ builder.Services.AddDbContext<StockViewerDb>(options => options.UseSqlite($"Data
 
 var app = builder.Build();
 
+app.ApplyMigrationsInDevelopment();
+
 // ApiExceptionHandler handles every exception; the empty fallback only satisfies the middleware's setup check
 // (otherwise it would require AddProblemDetails, and the API never returns ProblemDetails).
 app.UseExceptionHandler(_ => { });

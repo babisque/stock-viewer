@@ -1,0 +1,17 @@
+@* One summary card: the title (dt), the value and an optional detail line (dd). *@
+<div class="card summary-card">
+    <dt class="text-sm text-muted">@Title</dt>
+    <dd class="value tabular">@ChildContent</dd>
+    @if (Detail is not null)
+    {
+        <dd class="detail text-xs text-muted">@Detail</dd>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public required string Title { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter] public RenderFragment? Detail { get; set; }
+}

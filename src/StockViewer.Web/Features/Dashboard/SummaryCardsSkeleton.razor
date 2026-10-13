@@ -1,0 +1,11 @@
+@* Port of SummaryCardsSkeleton: five placeholder cards while the portfolio loads. *@
+<div class="cards" aria-hidden="true">
+    @for (var index = 0; index < 5; index++)
+    {
+        <div @key="index" class="card">
+            <Skeleton Width="6rem" Height="1rem" />
+            <div class="gap"></div>
+            <Skeleton Width="8rem" Height="2rem" />
+        </div>
+    }
+</div>

@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Blazor-ApexCharts" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\StockViewer.ServiceDefaults\StockViewer.ServiceDefaults.csproj" />
     <ProjectReference Include="..\StockViewer.Shared\StockViewer.Shared.csproj" />
   </ItemGroup>

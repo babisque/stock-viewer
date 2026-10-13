@@ -1,0 +1,9 @@
+@* Port of components/ui/skeleton.tsx: a pulsing placeholder. Sized by parameters, because a parent's scoped CSS
+   doesn't reach elements rendered by this component. *@
+<div class="skeleton" style="width: @Width; height: @Height" aria-hidden="true"></div>
+
+@code {
+    [Parameter] public string Width { get; set; } = "100%";
+
+    [Parameter] public string Height { get; set; } = "1.25rem";
+}

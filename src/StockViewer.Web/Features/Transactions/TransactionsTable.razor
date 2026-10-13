@@ -1,0 +1,88 @@
+@* Port of TransactionsTable.tsx: newest first, and deleting asks for a confirmation inside the row. *@
+<DataTable aria-label="Transactions">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th class="num">Quantity</th>
+            <th class="num">Unit price</th>
+            <th class="num">Fees</th>
+            <th class="num">Total</th>
+            <th><span class="sr-only">Actions</span></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Transactions.Count == 0)
+        {
+            <tr>
+                <td colspan="7" class="empty text-muted">No transactions.</td>
+            </tr>
+        }
+        @foreach (var transaction in Transactions.Reverse())
+        {
+            <tr @key="transaction.Id">
+                <td>@Display.TradeDate(transaction.Date)</td>
+                <td class="type @(transaction.Type == TransactionType.SELL ? "text-muted" : null)">@TypeLabel(transaction.Type)</td>
+                <td class="num">@Format.Quantity(transaction.Quantity, Market)</td>
+                <td class="num">@Format.Money(transaction.UnitPrice, Currency)</td>
+                <td class="num">@Format.Money(transaction.Fees, Currency)</td>
+                <td class="num">@TotalText(transaction)</td>
+                <td class="actions">
+                    @if (confirmingId == transaction.Id)
+                    {
+                        <span class="confirm">
+                            <span class="text-xs text-muted">Delete?</span>
+                            <Button Size="ButtonSize.Sm" Variant="ButtonVariant.Destructive" Disabled="IsDeleting"
+                                    OnClick="() => ConfirmDeleteAsync(transaction)">
+                                @(IsDeleting ? "Deleting…" : "Delete")
+                            </Button>
+                            <Button Size="ButtonSize.Sm" Variant="ButtonVariant.Ghost" Disabled="IsDeleting" OnClick="() => confirmingId = null">
+                                Keep
+                            </Button>
+                        </span>
+                    }
+                    else
+                    {
+                        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon"
+                                aria-label="@($"Delete {TypeLabel(transaction.Type)} of {Display.TradeDate(transaction.Date)}")"
+                                OnClick="() => confirmingId = transaction.Id">
+                            <Icons Name="IconName.Trash" />
+                        </Button>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</DataTable>
+
+@code {
+    private string? confirmingId;
+
+    /// <summary>Oldest first, as the Api returns them.</summary>
+    [Parameter, EditorRequired] public required IReadOnlyList<Transaction> Transactions { get; set; }
+
+    [Parameter] public Market Market { get; set; }
+
+    [Parameter] public Currency Currency { get; set; }
+
+    [Parameter] public EventCallback<Transaction> OnDelete { get; set; }
+
+    [Parameter] public bool IsDeleting { get; set; }
+
+    private static string TypeLabel(TransactionType type) => type == TransactionType.BUY ? "Buy" : "Sell";
+
+    private string TotalText(Transaction transaction) =>
+        Format.Money(TransactionFormModel.Total(transaction), Currency);
+
+    private async Task ConfirmDeleteAsync(Transaction transaction)
+    {
+        try
+        {
+            await OnDelete.InvokeAsync(transaction);
+        }
+        finally
+        {
+            confirmingId = null;
+        }
+    }
+}

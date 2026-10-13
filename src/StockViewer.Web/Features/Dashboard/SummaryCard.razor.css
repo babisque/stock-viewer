@@ -1,0 +1,10 @@
+dd {
+    margin: 0.25rem 0 0;
+}
+
+.value {
+    font-size: 1.5rem;
+    line-height: 2rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}

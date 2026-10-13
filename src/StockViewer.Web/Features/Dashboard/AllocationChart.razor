@@ -1,0 +1,126 @@
+@* Port of AllocationChart.tsx. The legend is a real table with value and share, so the chart never relies on colour
+   alone and screen readers get the same information. ApexCharts draws in the browser, so the donut appears once
+   the page is interactive; the prerendered page already has the legend. *@
+@using ApexCharts
+@using Format = StockViewer.Shared.Money.Format
+
+<section class="card chart" aria-labelledby="@titleId">
+    <h2 id="@titleId" class="chart-title">@Title</h2>
+    @if (Slices.Count == 0)
+    {
+        <p class="empty text-sm text-muted">No priced positions to show.</p>
+    }
+    else
+    {
+        <div class="chart-body">
+            <div role="img" aria-label="@AccessibleName" class="donut">
+                @if (RendererInfo.IsInteractive)
+                {
+                    <ApexChart @key="chartKey" TItem="ChartSlice" Options="options" Height="160" Width="160">
+                        <ChildContent>
+                            <ApexPointSeries TItem="ChartSlice"
+                                             Items="Slices"
+                                             Name="@Title"
+                                             SeriesType="SeriesType.Donut"
+                                             XValue="slice => slice.Label"
+                                             YValue="slice => slice.Percent"
+                                             PointColor="slice => ChartPalette.Color(slice.ColorSlot, Dark)" />
+                        </ChildContent>
+                        <ApexPointTooltip>
+                            <div class="tooltip">
+                                <div class="tooltip-label">@context.DataPoint.X</div>
+                                <div class="tabular">@TooltipText(context.DataPoint.Items)</div>
+                            </div>
+                        </ApexPointTooltip>
+                    </ApexChart>
+                }
+                else
+                {
+                    <Skeleton Width="10rem" Height="10rem" />
+                }
+            </div>
+            <table class="legend">
+                <thead class="sr-only">
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Value</th>
+                        <th scope="col">Share</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var slice in Slices)
+                    {
+                        <tr @key="slice.Key" class="tabular">
+                            <th scope="row">
+                                <span class="legend-label">
+                                    <span class="swatch" style="background-color: @ChartPalette.Color(slice.ColorSlot, Dark)" aria-hidden="true"></span>
+                                    @slice.Label
+                                </span>
+                            </th>
+                            <td class="text-muted">@Format.Money(slice.Value, Currency)</td>
+                            <td class="share">@Format.Share(slice.Percent)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    @if (Note is not null)
+    {
+        <p class="note text-xs text-muted">@Note</p>
+    }
+</section>
+
+@code {
+    private readonly string titleId = $"chart-{Guid.NewGuid():N}";
+    private ApexChartOptions<ChartSlice> options = new();
+    private string chartKey = "";
+
+    [Parameter, EditorRequired] public required string Title { get; set; }
+
+    [Parameter, EditorRequired] public required IReadOnlyList<ChartSlice> Slices { get; set; }
+
+    /// <summary>Positions left out of the chart, and why.</summary>
+    [Parameter] public string? Note { get; set; }
+
+    [Parameter] public Currency Currency { get; set; }
+
+    /// <summary>The resolved theme, for the palette (SVG fills can't use CSS variables).</summary>
+    [Parameter] public bool Dark { get; set; }
+
+    private string AccessibleName =>
+        $"{Title}: {string.Join(", ", Slices.Select(slice => $"{slice.Label} {Format.Share(slice.Percent)}"))}";
+
+    protected override void OnParametersSet()
+    {
+        // ApexCharts reads its options once, so a new theme or new data recreates the chart.
+        var key = $"{Dark}|{Currency}|{string.Join(";", Slices.Select(slice => $"{slice.Key}={slice.Value}"))}";
+        if (key == chartKey)
+        {
+            return;
+        }
+        chartKey = key;
+        options = new ApexChartOptions<ChartSlice>
+        {
+            Chart = new Chart
+            {
+                Animations = new Animations { Enabled = false },
+                Toolbar = new Toolbar { Show = false },
+                Background = "transparent",
+            },
+            Legend = new Legend { Show = false },
+            DataLabels = new DataLabels { Enabled = false },
+            Stroke = new Stroke { Colors = [ChartPalette.SliceGap(Dark)], Width = 2 },
+            PlotOptions = new PlotOptions
+            {
+                Pie = new PlotOptionsPie { Donut = new PlotOptionsDonut { Size = "58%" }, ExpandOnClick = false },
+            },
+        };
+    }
+
+    private string TooltipText(IEnumerable<ChartSlice> items)
+    {
+        var slice = items.First();
+        return $"{Format.Money(slice.Value, Currency)} · {Format.Share(slice.Percent)}";
+    }
+}

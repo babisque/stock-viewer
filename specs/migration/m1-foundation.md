@@ -124,7 +124,7 @@ public sealed class TransactionRow
 * Enums use `HasConversion<string>()`. A value converter sets `DateTimeKind.Utc` on read.
 * Decimals use the provider's default TEXT mapping, so values are exact and keep full precision.
 * Table names stay `Position` and `Transaction`, which keeps the M4 import a straight copy.
-* Migrations are applied explicitly with `dotnet ef database update`, never automatically at startup.
+* In Development the API applies pending migrations at startup, so the first `aspire run` creates the SQLite file (`Api/Data/DevelopmentMigrations.cs`). In any other environment they are applied explicitly with `dotnet ef database update`. Creating a migration still needs approval.
 
 ## 3. Executable Commands
 * **Prerequisites:** .NET 10 SDK, Aspire CLI (`dotnet tool install -g aspire.cli` or the official install script), `dotnet tool install -g dotnet-ef`.
@@ -204,6 +204,6 @@ public static class Profit
   * Before changing any validation message or rule (including the 15-significant-digit limit).
 * **Never do:**
   * Never modify anything under `apps/` or `packages/` in this phase.
-  * Never apply migrations automatically at app startup.
+  * Never apply migrations automatically at app startup outside the Development environment.
   * Never reference ASP.NET Core or EF Core from `StockViewer.Shared`.
   * Never commit `*.db` files or secrets.

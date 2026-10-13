@@ -1,0 +1,121 @@
+@* Port of PositionForm.tsx. Validates with the shared rules (SharedRulesValidator); Api errors go to their field
+   when they name one, otherwise to the top of the form. In edit mode only the notes can change. *@
+
+<div class="position-form">
+<EditForm EditContext="editContext" OnSubmit="SubmitAsync" novalidate>
+    <SharedRulesValidator @ref="validator" Validate="() => model.Validate(IsEdit)" />
+
+    @if (formError is not null)
+    {
+        <p role="alert" class="form-error">@formError</p>
+    }
+
+    <div class="grid">
+        <Field Label="Ticker" For="ticker" ValidationFor="() => model.Ticker">
+            <Input id="ticker" placeholder="PETR4" autocomplete="off" class="upper" readonly="@IsEdit" @bind-Value="model.Ticker" />
+        </Field>
+
+        <Field Label="Market" For="market" ValidationFor="() => model.Market">
+            <Select id="market" disabled="@IsEdit" @bind-Value="model.Market">
+                <option value="B3">B3</option>
+                <option value="US">US</option>
+            </Select>
+        </Field>
+
+        @if (IsEdit)
+        {
+            @* Read-only and formatted: these come from the transactions. *@
+            <Field Label="Quantity" For="quantity">
+                <input id="quantity" class="input" readonly value="@derivedQuantity" aria-describedby="derived-hint" />
+            </Field>
+            <Field Label="Average price" For="averagePrice">
+                <input id="averagePrice" class="input" readonly value="@derivedAveragePrice" aria-describedby="derived-hint" />
+            </Field>
+            <p id="derived-hint" class="hint text-xs text-muted">
+                Calculated from the transactions. Record a buy or sell to change them.
+            </p>
+        }
+        else
+        {
+            <Field Label="Quantity" For="quantity" ValidationFor="() => model.Quantity">
+                <Input id="quantity" inputmode="decimal" placeholder="100" @bind-Value="model.Quantity" />
+            </Field>
+            <Field Label="Average price" For="averagePrice" ValidationFor="() => model.AveragePrice">
+                <Input id="averagePrice" inputmode="decimal" placeholder="28,45" @bind-Value="model.AveragePrice" />
+            </Field>
+        }
+    </div>
+
+    <Field Label="Notes" For="notes" ValidationFor="() => model.Notes">
+        <Textarea id="notes" rows="2" @bind-Value="model.Notes" />
+    </Field>
+
+    <div class="footer">
+        <Button Variant="ButtonVariant.Outline" OnClick="OnCancel">Cancel</Button>
+        <Button Type="submit" Disabled="submitting">@SubmitText</Button>
+    </div>
+</EditForm>
+</div>
+
+@code {
+    private PositionFormModel model = new();
+    private EditContext editContext = default!;
+    private SharedRulesValidator? validator;
+    private string? formError;
+    private bool submitting;
+    private string derivedQuantity = "";
+    private string derivedAveragePrice = "";
+
+    [Parameter, EditorRequired] public required PositionFormModel Initial { get; set; }
+
+    /// <summary>Ticker and market are fixed once the position exists, and quantity and average price come from its transactions: only notes change.</summary>
+    [Parameter] public bool IsEdit { get; set; }
+
+    /// <summary>Gets the Api body (uppercase ticker, dot decimals). Throw an <see cref="ApiException"/> to show the error in the form.</summary>
+    [Parameter] public EventCallback<CreatePositionRequest> OnSubmit { get; set; }
+
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private string SubmitText => submitting ? "Saving…" : IsEdit ? "Save changes" : "Add position";
+
+    protected override void OnInitialized()
+    {
+        model = Initial;
+        editContext = new EditContext(model);
+        if (IsEdit)
+        {
+            var market = Enum.Parse<Market>(model.Market);
+            derivedQuantity = DecimalText.TryParse(model.Quantity, out var quantity)
+                ? Format.Quantity(quantity, market)
+                : model.Quantity;
+            derivedAveragePrice = DecimalText.TryParse(model.AveragePrice, out var averagePrice)
+                ? Format.Money(averagePrice, Markets.CurrencyFor(market))
+                : model.AveragePrice;
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        formError = null;
+        if (!editContext.Validate())
+        {
+            return;
+        }
+        submitting = true;
+        try
+        {
+            await OnSubmit.InvokeAsync(model.ToRequest());
+        }
+        catch (ApiException error)
+        {
+            if (!validator!.AddApiError(error))
+            {
+                formError = error.Message;
+            }
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+}

@@ -1,0 +1,65 @@
+@* Port of SummaryCards.tsx. Values come computed from the Api (totals per currency); only formatting here. *@
+<section class="summary" aria-label="Portfolio summary">
+    <dl class="cards">
+        <SummaryCard Title="Total invested">@MoneyOrDash(row?.Invested)</SummaryCard>
+        <SummaryCard Title="Current value">@MoneyOrDash(row?.CurrentValue)</SummaryCard>
+        <SummaryCard Title="Unrealized profit">
+            <ChildContent>
+                @if (row is null)
+                {
+                    @Dash
+                }
+                else
+                {
+                    <span class="@Display.SignClass(row.Profit)">@Format.SignedMoney(row.Profit, Currency)</span>
+                }
+            </ChildContent>
+            <Detail>
+                @if (row is not null)
+                {
+                    <span class="text-sm @Display.SignClass(row.ProfitPercent)">@Format.Percent(row.ProfitPercent)</span>
+                }
+            </Detail>
+        </SummaryCard>
+        <SummaryCard Title="Realized profit">
+            @if (row is null)
+            {
+                @Dash
+            }
+            else
+            {
+                <span class="@Display.SignClass(row.RealizedProfit)">@Format.SignedMoney(row.RealizedProfit, Currency)</span>
+            }
+        </SummaryCard>
+        <SummaryCard Title="USD/BRL">
+            <ChildContent>@(Fx is null ? Dash : Format.Money(Fx.Rate, Currency.BRL))</ChildContent>
+            <Detail>@(Fx is null ? "unavailable" : Display.SourceAndTime(Fx, Clock.LocalTimeZone))</Detail>
+        </SummaryCard>
+    </dl>
+
+    <p class="footnote text-xs text-muted">
+        @(Totals is null
+            ? "Totals are unavailable without the USD/BRL rate."
+            : "Invested, value and unrealized profit exclude positions without a price; realized profit comes from your sells. Totals convert at the current USD/BRL rate. Prices may be delayed ~15 min.")
+    </p>
+</section>
+
+@code {
+    private const string Dash = "—";
+
+    private Totals? row;
+
+    [Inject] private TimeProvider Clock { get; set; } = default!;
+
+    /// <summary>Null without a USD/BRL rate.</summary>
+    [Parameter] public PortfolioTotals? Totals { get; set; }
+
+    [Parameter] public FxRate? Fx { get; set; }
+
+    [Parameter] public Currency Currency { get; set; }
+
+    protected override void OnParametersSet() =>
+        row = Currency == Currency.BRL ? Totals?.Brl : Totals?.Usd;
+
+    private string MoneyOrDash(decimal? amount) => amount is { } value ? Format.Money(value, Currency) : Dash;
+}

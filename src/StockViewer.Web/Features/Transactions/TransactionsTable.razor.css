@@ -1,0 +1,24 @@
+th.num,
+td.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.type {
+    font-weight: 500;
+}
+
+.actions {
+    text-align: right;
+}
+
+.confirm {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.empty {
+    padding: 1.5rem 0;
+    text-align: center;
+}
