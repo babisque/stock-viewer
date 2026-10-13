@@ -1,0 +1,29 @@
+@* Port of PositionsTableSkeleton: the table's headers with placeholder rows, while the portfolio loads. *@
+<div class="card table-card">
+    <DataTable aria-busy="true" aria-label="Loading portfolio">
+        <thead>
+            <tr>
+                @foreach (var column in PositionsTableColumns.All)
+                {
+                    <th @key="column.Column" class="@(column.Numeric ? "num" : null)">@column.Label</th>
+                }
+                <th><span class="sr-only">Actions</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (var row = 0; row < Rows; row++)
+            {
+                <tr @key="row">
+                    @for (var cell = 0; cell <= PositionsTableColumns.All.Count; cell++)
+                    {
+                        <td @key="cell"><Skeleton /></td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </DataTable>
+</div>
+
+@code {
+    [Parameter] public int Rows { get; set; } = 3;
+}

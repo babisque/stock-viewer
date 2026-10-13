@@ -1,5 +1,7 @@
 # Phase 1 Spec: Foundation & Position Management
 
+> **Implemented in Node; ported to .NET in [`specs/migration/`](migration/README.md).** The Node/TypeScript code was removed in M4. Kept as history: the behaviour described here is what the .NET app implements, but stack and file references are the old Node ones.
+
 ## 1. Overview and Goal
 * **Purpose:** Set up the TypeScript monorepo and let the user manually register, edit and delete stock positions (ticker, market, quantity, average price). No live prices yet.
 * **Success Criteria:**

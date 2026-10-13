@@ -1,5 +1,7 @@
 # Phase 3 Spec: Portfolio Dashboard
 
+> **Implemented in Node; ported to .NET in [`specs/migration/`](migration/README.md).** The Node/TypeScript code was removed in M4. Kept as history: the behaviour described here is what the .NET app implements, but stack and file references are the old Node ones.
+
 ## 1. Overview and Goal
 * **Purpose:** Turn the positions table into a real dashboard: summary cards, allocation chart, currency toggle, sorting/filtering and automatic refresh.
 * **Success Criteria:**

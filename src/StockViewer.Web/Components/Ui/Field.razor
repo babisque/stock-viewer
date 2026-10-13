@@ -1,0 +1,22 @@
+@* A label, its control and the field's validation message (the Field helper from the React forms). *@
+@using System.Linq.Expressions
+
+<div class="field">
+    <label class="field-label" for="@For">@Label</label>
+    @ChildContent
+    @if (ValidationFor is not null)
+    {
+        <ValidationMessage For="ValidationFor" />
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public required string Label { get; set; }
+
+    /// <summary>The id of the control the label is for.</summary>
+    [Parameter, EditorRequired] public required string For { get; set; }
+
+    [Parameter] public Expression<Func<string>>? ValidationFor { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

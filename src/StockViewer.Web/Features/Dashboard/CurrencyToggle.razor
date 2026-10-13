@@ -1,0 +1,17 @@
+@* Port of CurrencyToggle.tsx: switches every total between BRL and USD. *@
+<Segmented TValue="Currency" Label="Show totals in" Options="options" Value="Value" ValueChanged="ValueChanged" Disabled="Disabled" />
+
+@code {
+    private static readonly IReadOnlyList<SegmentedOption<Currency>> options =
+    [
+        new(Currency.BRL, "BRL"),
+        new(Currency.USD, "USD"),
+    ];
+
+    [Parameter] public Currency Value { get; set; }
+
+    [Parameter] public EventCallback<Currency> ValueChanged { get; set; }
+
+    /// <summary>Without a USD/BRL rate there is nothing to convert with.</summary>
+    [Parameter] public bool Disabled { get; set; }
+}

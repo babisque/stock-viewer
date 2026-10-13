@@ -1,0 +1,23 @@
+@* Port of components/ui/native-select.tsx: a native <select> bound to a string form model. *@
+@inherits InputBase<string>
+
+<select @attributes="AdditionalAttributes"
+        class="input @CssClass"
+        value="@CurrentValueAsString"
+        @onchange="args => CurrentValueAsString = (string?)args.Value">
+    @ChildContent
+</select>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    protected override bool TryParseValueFromString(
+        string? value,
+        out string result,
+        [System.Diagnostics.CodeAnalysis.NotNullWhen(false)] out string? validationErrorMessage)
+    {
+        result = value ?? "";
+        validationErrorMessage = null;
+        return true;
+    }
+}

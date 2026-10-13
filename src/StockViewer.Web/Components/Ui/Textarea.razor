@@ -1,0 +1,19 @@
+@* Port of components/ui/textarea.tsx, bound like Ui/Input. *@
+@inherits InputBase<string>
+
+<textarea @attributes="AdditionalAttributes"
+          class="input @CssClass"
+          value="@CurrentValueAsString"
+          @oninput="args => CurrentValueAsString = (string?)args.Value"></textarea>
+
+@code {
+    protected override bool TryParseValueFromString(
+        string? value,
+        out string result,
+        [System.Diagnostics.CodeAnalysis.NotNullWhen(false)] out string? validationErrorMessage)
+    {
+        result = value ?? "";
+        validationErrorMessage = null;
+        return true;
+    }
+}

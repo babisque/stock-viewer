@@ -1,0 +1,53 @@
+@* Port of DeletePositionDialog.tsx: stays open until the delete succeeds, so an error can be shown. *@
+<ConfirmDialog Open="Position is not null"
+               Title="@($"Delete {Position?.Ticker} ({Position?.Market})?")"
+               Description="This position will be permanently removed."
+               Busy="busy"
+               OnConfirm="ConfirmAsync"
+               OnCancel="CancelAsync">
+    @if (error is not null)
+    {
+        <p role="alert" class="form-error">@error</p>
+    }
+</ConfirmDialog>
+
+@code {
+    private bool busy;
+    private string? error;
+
+    [Parameter] public PortfolioPosition? Position { get; set; }
+
+    /// <summary>Deletes the position; throws <see cref="ApiException"/> to keep the dialog open with the message.</summary>
+    [Parameter] public EventCallback<PortfolioPosition> OnConfirm { get; set; }
+
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private async Task ConfirmAsync()
+    {
+        if (Position is null)
+        {
+            return;
+        }
+        busy = true;
+        error = null;
+        try
+        {
+            await OnConfirm.InvokeAsync(Position);
+            await OnClose.InvokeAsync();
+        }
+        catch (ApiException failure)
+        {
+            error = failure.Message;
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private Task CancelAsync()
+    {
+        error = null;
+        return OnClose.InvokeAsync();
+    }
+}

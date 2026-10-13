@@ -1,0 +1,14 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.6.1">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AspireUseCliBundle>true</AspireUseCliBundle>
+    <UserSecretsId>53932039-ea6b-4565-a3e5-cb36065bf57b</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StockViewer.Api\StockViewer.Api.csproj" />
+    <ProjectReference Include="..\StockViewer.Web\StockViewer.Web.csproj" />
+  </ItemGroup>
+
+</Project>

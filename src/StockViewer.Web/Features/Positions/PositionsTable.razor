@@ -1,0 +1,156 @@
+@* Port of PositionsTable.tsx. Each row shows the position in its own currency; sorting converts money to the
+   selected currency (PositionSort). Display strings are built in PositionRow, so the markup does no money math. *@
+
+<section class="positions" aria-label="Positions">
+    <div class="toolbar">
+        <h2 class="text-sm heading">Positions</h2>
+        <Segmented TValue="Market?" Label="Filter by market" Options="marketOptions" Value="market" ValueChanged="SetMarket" />
+    </div>
+    <div class="card table-card">
+        <DataTable>
+            <thead>
+                <tr>
+                    @foreach (var column in PositionsTableColumns.All)
+                    {
+                        <th @key="column.Column" class="@(column.Numeric ? "num" : null)" aria-sort="@AriaSort(column.Column)">
+                            <button type="button" class="sort @(column.Numeric ? "sort-num" : null)" @onclick="() => ToggleSort(column.Column)">
+                                @column.Label
+                                <Icons Name="SortIcon(column.Column)" Class="@(sorting?.Column == column.Column ? null : "faint")" />
+                            </button>
+                        </th>
+                    }
+                    <th><span class="sr-only">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (rows.Count == 0)
+                {
+                    <tr>
+                        <td colspan="@(PositionsTableColumns.All.Count + 1)" class="empty text-muted">No @market positions.</td>
+                    </tr>
+                }
+                @foreach (var row in rows)
+                {
+                    <tr @key="row.Position.Id" class="@(row.Closed ? "closed text-muted" : null)">
+                        <td class="ticker">
+                            @row.Position.Ticker
+                            @if (row.Closed)
+                            {
+                                @(" ")
+                                <span class="badge">closed</span>
+                            }
+                        </td>
+                        <td>@row.Position.Market</td>
+                        <td class="num">@row.Quantity</td>
+                        <td class="num">@row.AveragePrice</td>
+                        <td class="num">
+                            @if (row.Price is null)
+                            {
+                                <span class="unavailable text-muted">price unavailable</span>
+                            }
+                            else
+                            {
+                                <div>@row.Price</div>
+                                <div class="text-xs text-muted">@row.PriceSource</div>
+                            }
+                        </td>
+                        <td class="num">@row.Invested</td>
+                        <td class="num">@DashIfNull(row.CurrentValue)</td>
+                        <td class="num">
+                            @if (row.Profit is null)
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                            else
+                            {
+                                <span class="@row.ProfitClass">@row.Profit</span>
+                            }
+                        </td>
+                        <td class="num">
+                            @if (row.ProfitPercent is null)
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                            else
+                            {
+                                <span class="@row.ProfitPercentClass">@row.ProfitPercent</span>
+                            }
+                        </td>
+                        <td class="num"><span class="@row.RealizedClass">@row.Realized</span></td>
+                        <td class="notes text-muted" title="@row.Position.Notes">@row.Position.Notes</td>
+                        <td class="actions">
+                            <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" aria-label="@($"Transactions of {row.Label}")"
+                                    OnClick="() => OnTransactions.InvokeAsync(row.Position)">
+                                <Icons Name="IconName.History" />
+                            </Button>
+                            <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" aria-label="@($"Edit {row.Label}")"
+                                    OnClick="() => OnEdit.InvokeAsync(row.Position)">
+                                <Icons Name="IconName.Pencil" />
+                            </Button>
+                            <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" aria-label="@($"Delete {row.Label}")"
+                                    OnClick="() => OnDelete.InvokeAsync(row.Position)">
+                                <Icons Name="IconName.Trash" />
+                            </Button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </DataTable>
+    </div>
+</section>
+
+@code {
+    private static readonly IReadOnlyList<SegmentedOption<Market?>> marketOptions =
+    [
+        new(null, "All"),
+        new(Market.B3, "B3"),
+        new(Market.US, "US"),
+    ];
+
+    private Market? market;
+    private PositionSorting? sorting;
+    private IReadOnlyList<PositionRow> rows = [];
+
+    [Inject] private TimeProvider Clock { get; set; } = default!;
+
+    [Parameter, EditorRequired] public required IReadOnlyList<PortfolioPosition> Positions { get; set; }
+
+    /// <summary>Money columns sort by their value in this currency.</summary>
+    [Parameter] public Currency Currency { get; set; }
+
+    [Parameter] public decimal? UsdBrlRate { get; set; }
+
+    [Parameter] public EventCallback<PortfolioPosition> OnTransactions { get; set; }
+
+    [Parameter] public EventCallback<PortfolioPosition> OnEdit { get; set; }
+
+    [Parameter] public EventCallback<PortfolioPosition> OnDelete { get; set; }
+
+    protected override void OnParametersSet() => BuildRows();
+
+    private void SetMarket(Market? value)
+    {
+        market = value;
+        BuildRows();
+    }
+
+    private void ToggleSort(PositionColumn column)
+    {
+        sorting = PositionSort.Toggle(sorting, column);
+        BuildRows();
+    }
+
+    private void BuildRows() =>
+        rows = [.. PositionSort.Apply(Positions, market, sorting, Currency, UsdBrlRate)
+            .Select(position => PositionRow.From(position, Clock.LocalTimeZone))];
+
+    private string AriaSort(PositionColumn column) => sorting?.Column != column
+        ? "none"
+        : sorting.Direction == SortDirection.Ascending ? "ascending" : "descending";
+
+    private IconName SortIcon(PositionColumn column) => sorting?.Column != column
+        ? IconName.ArrowUpDown
+        : sorting.Direction == SortDirection.Ascending ? IconName.ArrowUp : IconName.ArrowDown;
+
+    private static string DashIfNull(string? text) => text ?? "—";
+}

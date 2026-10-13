@@ -1,5 +1,7 @@
 # Phase 4 Spec: Transactions & Automatic Average Price
 
+> **Implemented in Node; ported to .NET in [`specs/migration/`](migration/README.md).** The Node/TypeScript code was removed in M4. Kept as history: the behaviour described here is what the .NET app implements, but stack and file references are the old Node ones.
+
 ## 1. Overview and Goal
 * **Purpose:** Instead of typing the average price by hand, the user records each buy and sell. The app computes quantity, average price and realized profit from the transaction history.
 * **Success Criteria:**

@@ -1,0 +1,326 @@
+@* Port of DashboardPage.tsx, the app's only page. It is the only component that talks to the Api; the others get
+   data and callbacks. The portfolio loaded during prerender is persisted, so the Api is called once on first load. *@
+@page "/"
+@implements IAsyncDisposable
+@inject ApiClient Api
+@inject TimeProvider Clock
+@inject IJSRuntime JS
+@using StockViewer.Web.Features.Positions
+@using StockViewer.Web.Features.Transactions
+
+<PageTitle>stock-viewer</PageTitle>
+
+<main class="dashboard">
+    <header class="header">
+        <div class="header-row">
+            <h1 class="title">stock-viewer</h1>
+            <div class="header-actions">
+                <ThemeToggle Value="theme" ValueChanged="SetThemeAsync" />
+                <Button OnClick="OpenAdd"><Icons Name="IconName.Plus" /> Add position</Button>
+            </div>
+        </div>
+        <div class="header-row header-row-start">
+            <CurrencyToggle Value="currency" ValueChanged="SetCurrencyAsync" Disabled="State?.Portfolio.Fx is null" />
+            @if (State is not null)
+            {
+                <RefreshControl LastUpdatedAt="State.LoadedAt" IsRefreshing="fetching" OnRefresh="RefreshAsync" />
+            }
+        </div>
+    </header>
+
+    @if (State is null && loadError is null)
+    {
+        <SummaryCardsSkeleton />
+        <div class="charts">
+            <Skeleton Height="14rem" />
+            <Skeleton Height="14rem" />
+        </div>
+        <PositionsTableSkeleton />
+    }
+    else if (State is null)
+    {
+        <div role="alert" class="error-state">
+            <p class="text-destructive">Could not load portfolio: @loadError</p>
+            <Button Variant="ButtonVariant.Outline" OnClick="RetryAsync">Try again</Button>
+        </div>
+    }
+    else if (State.Portfolio.Positions.Count == 0)
+    {
+        <div class="empty-state">
+            <p class="text-muted">No positions yet — add your first stock</p>
+            <Button OnClick="OpenAdd"><Icons Name="IconName.Plus" /> Add position</Button>
+        </div>
+    }
+    else
+    {
+        var portfolio = State.Portfolio;
+        @if (refreshFailed && !fetching)
+        {
+            <RefreshFailedBanner LastUpdatedAt="State.LoadedAt" IsRefreshing="fetching" OnRefresh="RefreshAsync" />
+        }
+        <PortfolioWarnings Warnings="portfolio.Warnings" />
+        <SummaryCards Totals="portfolio.Totals" Fx="portfolio.Fx" Currency="currency" />
+        <div class="charts">
+            @if (byMarket is not null)
+            {
+                <AllocationChart Title="By market" Slices="byMarket.Slices" Note="@byMarket.Note" Currency="currency" Dark="Dark" />
+            }
+            @if (byPosition is not null)
+            {
+                <AllocationChart Title="By position" Slices="byPosition.Slices" Note="@byPosition.Note" Currency="currency" Dark="Dark" />
+            }
+        </div>
+        <PositionsTable Positions="portfolio.Positions"
+                        Currency="currency"
+                        UsdBrlRate="portfolio.Fx?.Rate"
+                        OnTransactions="OpenTransactions"
+                        OnEdit="OpenEdit"
+                        OnDelete="OpenDelete" />
+    }
+
+    <PositionDialog Open="positionDialogOpen" Position="editing" OnSubmit="SavePositionAsync" OnClose="ClosePositionDialog" />
+    <DeletePositionDialog Position="deleting" OnConfirm="DeletePositionAsync" OnClose="CloseDeleteDialog" />
+    <TransactionsDialog Position="TransactionsPosition"
+                        OnClose="CloseTransactions"
+                        LoadTransactions="loadTransactions"
+                        CreateTransaction="createTransaction"
+                        DeleteTransaction="deleteTransaction" />
+</main>
+
+@code {
+    private PortfolioRefresher refresher = default!;
+    private Func<string, Task<IReadOnlyList<Transaction>>> loadTransactions = default!;
+    private Func<string, CreateTransactionRequest, Task> createTransaction = default!;
+    private Func<string, Task> deleteTransaction = default!;
+    private DotNetObjectReference<DashboardPage>? selfReference;
+    private IJSObjectReference? preferencesModule;
+    private IJSObjectReference? visibilityModule;
+
+    private Theme theme;
+    private Currency currency;
+    private bool prefersDark;
+    private string? loadError;
+    private bool fetching;
+    private bool refreshFailed;
+    private AllocationData? byMarket;
+    private AllocationData? byPosition;
+
+    private bool positionDialogOpen;
+    private PortfolioPosition? editing;
+    private PortfolioPosition? deleting;
+    // By id, so the dialog always shows the latest portfolio entry.
+    private string? transactionsOf;
+
+    /// <summary>From the cookies, read by App.razor during prerender.</summary>
+    [CascadingParameter] public UserPreferences? Preferences { get; set; }
+
+    [PersistentState] public PortfolioState? State { get; set; }
+
+    private bool Dark => UserPreferences.IsDark(theme, prefersDark);
+
+    private PortfolioPosition? TransactionsPosition =>
+        State?.Portfolio.Positions.FirstOrDefault(position => position.Id == transactionsOf);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var preferences = Preferences ?? UserPreferences.Default;
+        theme = preferences.Theme;
+        currency = preferences.Currency;
+
+        refresher = new PortfolioRefresher(Clock, () => State?.LoadedAt, _ => InvokeAsync(AutoRefreshAsync));
+        loadTransactions = positionId => Api.GetTransactions(positionId);
+        createTransaction = async (positionId, request) =>
+        {
+            await Api.CreateTransaction(positionId, request);
+            await LoadAsync();
+        };
+        deleteTransaction = async transactionId =>
+        {
+            await Api.DeleteTransaction(transactionId);
+            await LoadAsync();
+        };
+
+        if (State is null)
+        {
+            await LoadAsync();
+        }
+        UpdateAllocations();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+        selfReference = DotNetObjectReference.Create(this);
+        preferencesModule = await JS.InvokeAsync<IJSObjectReference>("import", "./js/preferences.js");
+        visibilityModule = await JS.InvokeAsync<IJSObjectReference>("import", "./js/visibility.js");
+
+        var dark = await preferencesModule.InvokeAsync<bool>("watchColorScheme", selfReference);
+        var visible = await visibilityModule.InvokeAsync<bool>("watch", selfReference);
+        await refresher.SetVisibleAsync(visible);
+        refresher.Start();
+        if (dark != prefersDark)
+        {
+            prefersDark = dark;
+            StateHasChanged();
+        }
+    }
+
+    [JSInvokable]
+    public Task OnVisibilityChanged(bool visible) => refresher.SetVisibleAsync(visible);
+
+    [JSInvokable]
+    public Task OnColorSchemeChanged(bool dark) => InvokeAsync(() =>
+    {
+        prefersDark = dark;
+        StateHasChanged();
+    });
+
+    /// <summary>GET /api/portfolio: first load, "Try again", the 5-minute tick and the reload after a change.</summary>
+    private Task LoadAsync() => FetchAsync(() => Api.GetPortfolio());
+
+    private async Task FetchAsync(Func<Task<Portfolio>> fetch)
+    {
+        fetching = true;
+        StateHasChanged();
+        try
+        {
+            State = new PortfolioState(await fetch(), Clock.GetUtcNow());
+            loadError = null;
+            refreshFailed = false;
+        }
+        catch (ApiException error)
+        {
+            // Without data on screen it is a load error; otherwise keep the data and show the banner.
+            if (State is null)
+            {
+                loadError = error.Message;
+            }
+            else
+            {
+                refreshFailed = true;
+            }
+        }
+        finally
+        {
+            fetching = false;
+            UpdateAllocations();
+            StateHasChanged();
+        }
+    }
+
+    private Task AutoRefreshAsync() => fetching ? Task.CompletedTask : LoadAsync();
+
+    private Task RetryAsync() => LoadAsync();
+
+    /// <summary>The Refresh button: clears the Api's caches (POST /api/portfolio/refresh). Never within 60 s of the last update.</summary>
+    private Task RefreshAsync() =>
+        fetching || !refresher.CanRefresh() ? Task.CompletedTask : FetchAsync(() => Api.RefreshPortfolio());
+
+    private void UpdateAllocations()
+    {
+        byMarket = State is null ? null : AllocationData.ForMarkets(State.Portfolio, currency);
+        byPosition = State is null ? null : AllocationData.ForPositions(State.Portfolio, currency);
+    }
+
+    private async Task SetCurrencyAsync(Currency value)
+    {
+        currency = value;
+        UpdateAllocations();
+        await SavePreferenceAsync(UserPreferences.CurrencyCookie, value.ToString());
+    }
+
+    private async Task SetThemeAsync(Theme value)
+    {
+        theme = value;
+        var themeValue = UserPreferences.ThemeValue(value);
+        await SavePreferenceAsync(UserPreferences.ThemeCookie, themeValue);
+        if (preferencesModule is not null)
+        {
+            await preferencesModule.InvokeVoidAsync("applyTheme", themeValue);
+        }
+    }
+
+    private async Task SavePreferenceAsync(string cookie, string value)
+    {
+        if (preferencesModule is not null)
+        {
+            await preferencesModule.InvokeVoidAsync("setCookie", cookie, value);
+        }
+    }
+
+    private void OpenAdd()
+    {
+        editing = null;
+        positionDialogOpen = true;
+    }
+
+    private void OpenEdit(PortfolioPosition position)
+    {
+        editing = position;
+        positionDialogOpen = true;
+    }
+
+    private void ClosePositionDialog()
+    {
+        positionDialogOpen = false;
+        editing = null;
+    }
+
+    /// <summary>Creates the position, or saves an existing one's notes. ApiExceptions go back to the form.</summary>
+    private async Task SavePositionAsync(CreatePositionRequest request)
+    {
+        if (editing is null)
+        {
+            await Api.CreatePosition(request);
+        }
+        else
+        {
+            await Api.UpdatePosition(editing.Id, new UpdatePositionRequest(Notes: request.Notes));
+        }
+        await LoadAsync();
+        ClosePositionDialog();
+    }
+
+    private void OpenDelete(PortfolioPosition position) => deleting = position;
+
+    private void CloseDeleteDialog() => deleting = null;
+
+    private async Task DeletePositionAsync(PortfolioPosition position)
+    {
+        await Api.DeletePosition(position.Id);
+        await LoadAsync();
+    }
+
+    private void OpenTransactions(PortfolioPosition position) => transactionsOf = position.Id;
+
+    private void CloseTransactions() => transactionsOf = null;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (refresher is not null)
+        {
+            await refresher.DisposeAsync();
+        }
+        try
+        {
+            if (visibilityModule is not null)
+            {
+                await visibilityModule.InvokeVoidAsync("unwatch");
+                await visibilityModule.DisposeAsync();
+            }
+            if (preferencesModule is not null)
+            {
+                await preferencesModule.InvokeVoidAsync("unwatchColorScheme");
+                await preferencesModule.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+            // The circuit is gone, and the browser-side listeners with it.
+        }
+        selfReference?.Dispose();
+    }
+}

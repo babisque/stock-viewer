@@ -1,0 +1,24 @@
+.position-form ::deep form {
+    display: grid;
+    gap: 1rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.hint {
+    grid-column: span 2;
+}
+
+.footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.position-form ::deep .upper {
+    text-transform: uppercase;
+}

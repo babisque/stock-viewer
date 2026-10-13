@@ -1,0 +1,17 @@
+@* Port of RefreshControl in RefreshControl.tsx: the Refresh button (disabled during the 60 s cooldown) and the
+   time of the data on screen. *@
+@inherits CooldownComponentBase
+
+<div class="refresh">
+    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Sm" Disabled="IsRefreshing || Remaining > 0" OnClick="OnRefresh">
+        <Icons Name="IconName.Refresh" Class="@(IsRefreshing ? "spin" : null)" />
+        @ButtonText
+    </Button>
+    <span class="text-xs text-muted">Last updated at @LastUpdatedTime</span>
+</div>
+
+@code {
+    private string ButtonText => IsRefreshing
+        ? "Refreshing…"
+        : Remaining > 0 ? $"Refresh in {Remaining}s" : "Refresh";
+}

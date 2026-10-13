@@ -1,0 +1,38 @@
+@* The document shell is rendered on the server only. It reads the preference cookies, so the theme is right on
+   first paint (no flash), and hands them to the interactive part. *@
+<!DOCTYPE html>
+<html lang="en" data-theme="@UserPreferences.DataTheme(preferences.Theme)">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <ResourcePreloader />
+    <link rel="stylesheet" href="@Assets["app.css"]" />
+    <link rel="stylesheet" href="@Assets["StockViewer.Web.styles.css"]" />
+    <ImportMap />
+    <HeadOutlet @rendermode="InteractiveServer" />
+</head>
+
+<body>
+    <Routes @rendermode="InteractiveServer" Preferences="preferences" />
+    <ReconnectModal />
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
+</body>
+
+</html>
+
+@code {
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    private UserPreferences preferences = UserPreferences.Default;
+
+    protected override void OnInitialized()
+    {
+        if (HttpContext is not null)
+        {
+            preferences = UserPreferences.Read(name => HttpContext.Request.Cookies[name]);
+        }
+    }
+}

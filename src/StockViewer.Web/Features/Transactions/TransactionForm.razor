@@ -1,0 +1,121 @@
+@* Port of TransactionForm.tsx: record a buy or sell. After a successful submit the type and date are kept, because
+   several trades are often entered in a row. *@
+@using StockViewer.Shared.Validation
+
+<div class="transaction-form">
+    <EditForm EditContext="editContext" OnSubmit="SubmitAsync" novalidate aria-label="Add transaction">
+        <SharedRulesValidator @ref="validator" Validate="() => model.Validate(Market, Available, Clock)" />
+
+        @if (formError is not null)
+        {
+            <p role="alert" class="form-error">@formError</p>
+        }
+
+        <div class="type-row">
+            <Segmented TValue="string" Label="Transaction type" Options="typeOptions" Value="model.Type" ValueChanged="SetType" />
+            @if (IsSell)
+            {
+                <p class="text-xs text-muted">Available: @Format.Quantity(Available, Market)</p>
+            }
+        </div>
+
+        <div class="fields">
+            <Field Label="Date" For="tx-date" ValidationFor="() => model.Date">
+                <Input id="tx-date" type="date" max="@today" @bind-Value="model.Date" />
+            </Field>
+            <Field Label="Quantity" For="tx-quantity" ValidationFor="() => model.Quantity">
+                <Input id="tx-quantity" inputmode="decimal" placeholder="100" @bind-Value="model.Quantity" />
+            </Field>
+            <Field Label="Unit price" For="tx-unitPrice" ValidationFor="() => model.UnitPrice">
+                <Input id="tx-unitPrice" inputmode="decimal" placeholder="28,45" @bind-Value="model.UnitPrice" />
+            </Field>
+            <Field Label="Fees" For="tx-fees" ValidationFor="() => model.Fees">
+                <Input id="tx-fees" inputmode="decimal" placeholder="0" @bind-Value="model.Fees" />
+            </Field>
+        </div>
+
+        <div class="footer">
+            <p class="text-sm text-muted" aria-live="polite">
+                @(IsSell ? "Net proceeds" : "Total cost"): <span class="total tabular">@TotalText</span>
+            </p>
+            <Button Type="submit" Disabled="submitting">@SubmitText</Button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private static readonly IReadOnlyList<SegmentedOption<string>> typeOptions =
+    [
+        new(nameof(TransactionType.BUY), "Buy"),
+        new(nameof(TransactionType.SELL), "Sell"),
+    ];
+
+    private TransactionFormModel model = new();
+    private EditContext editContext = default!;
+    private SharedRulesValidator? validator;
+    private string today = "";
+    private string? formError;
+    private bool submitting;
+
+    [Inject] private TimeProvider Clock { get; set; } = default!;
+
+    [Parameter] public Market Market { get; set; }
+
+    [Parameter] public Currency Currency { get; set; }
+
+    /// <summary>Quantity held now.</summary>
+    [Parameter] public decimal Available { get; set; }
+
+    /// <summary>Gets the Api body; throw an <see cref="ApiException"/> to show the error in the form.</summary>
+    [Parameter] public EventCallback<CreateTransactionRequest> OnSubmit { get; set; }
+
+    private bool IsSell => model.Type == nameof(TransactionType.SELL);
+
+    private string SubmitText => submitting ? "Saving…" : IsSell ? "Record sell" : "Record buy";
+
+    private string TotalText => model.Total() is { } total ? Format.Money(total, Currency) : "—";
+
+    protected override void OnInitialized()
+    {
+        today = TransactionRules.TodayIsoDate(Clock);
+        model = TransactionFormModel.Empty(today);
+        editContext = new EditContext(model);
+    }
+
+    private void SetType(string type)
+    {
+        model.Type = type;
+        editContext.NotifyFieldChanged(editContext.Field(nameof(TransactionFormModel.Type)));
+    }
+
+    private async Task SubmitAsync()
+    {
+        formError = null;
+        if (!editContext.Validate())
+        {
+            return;
+        }
+        submitting = true;
+        try
+        {
+            await OnSubmit.InvokeAsync(model.ToRequest());
+            // Keep type and date for the next entry.
+            model.Quantity = "";
+            model.UnitPrice = "";
+            model.Fees = "0";
+            validator!.Reset();
+        }
+        catch (ApiException error)
+        {
+            // Values are kept so the user can fix the date or quantity.
+            if (!validator!.AddApiError(error))
+            {
+                formError = error.Message;
+            }
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+}

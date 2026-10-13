@@ -1,5 +1,7 @@
 # Phase 2 Spec: Prices & Profit Calculation
 
+> **Implemented in Node; ported to .NET in [`specs/migration/`](migration/README.md).** The Node/TypeScript code was removed in M4. Kept as history: the behaviour described here is what the .NET app implements, but stack and file references are the old Node ones.
+
 ## 1. Overview and Goal
 * **Purpose:** Fetch current prices for every position from free sources, fetch the USD/BRL rate, and calculate profit per position and for the whole portfolio.
 * **Success Criteria:**

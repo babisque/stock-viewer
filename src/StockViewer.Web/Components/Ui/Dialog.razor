@@ -1,0 +1,90 @@
+@* Port of components/ui/dialog.tsx and alert-dialog.tsx on a native <dialog>: showModal() traps focus, adds the
+   backdrop and closes on Esc. The content is only rendered while open, so forms start fresh every time. *@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<dialog @ref="element"
+        class="dialog dialog-@Size.ToString().ToLowerInvariant()"
+        role="@(Alert ? "alertdialog" : null)"
+        aria-modal="true"
+        aria-labelledby="@titleId"
+        aria-describedby="@(Description is null ? null : descriptionId)"
+        @onclose="HandleClosed">
+    @if (Open)
+    {
+        <div class="dialog-header">
+            <h2 id="@titleId" class="dialog-title">@Title</h2>
+            @if (Description is not null)
+            {
+                <p id="@descriptionId" class="dialog-description">@Description</p>
+            }
+        </div>
+        @ChildContent
+        @if (!Alert)
+        {
+            <button type="button" class="dialog-close" aria-label="Close" @onclick="RequestClose">
+                <Icons Name="IconName.X" />
+            </button>
+        }
+    }
+</dialog>
+
+@code {
+    private readonly string titleId = $"dialog-title-{Guid.NewGuid():N}";
+    private readonly string descriptionId = $"dialog-description-{Guid.NewGuid():N}";
+    private ElementReference element;
+    private IJSObjectReference? module;
+    private bool shown;
+
+    [Parameter] public bool Open { get; set; }
+
+    [Parameter, EditorRequired] public required string Title { get; set; }
+
+    [Parameter] public string? Description { get; set; }
+
+    /// <summary>An alert dialog (a confirmation): role="alertdialog" and no close button.</summary>
+    [Parameter] public bool Alert { get; set; }
+
+    [Parameter] public DialogSize Size { get; set; } = DialogSize.Md;
+
+    /// <summary>Raised when the user closes the dialog (Esc, the close button). The parent sets Open to false.</summary>
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Open == shown)
+        {
+            return;
+        }
+        module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/dialog.js");
+        shown = Open;
+        await module.InvokeVoidAsync(Open ? "show" : "close", element);
+    }
+
+    private Task RequestClose() => OnClose.InvokeAsync();
+
+    // The native "close" event also fires when we close it ourselves; only report closes the parent didn't ask for.
+    private Task HandleClosed()
+    {
+        shown = false;
+        return Open ? OnClose.InvokeAsync() : Task.CompletedTask;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (module is null)
+        {
+            return;
+        }
+        try
+        {
+            await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+            // The circuit is gone, and the browser-side module with it.
+        }
+    }
+}

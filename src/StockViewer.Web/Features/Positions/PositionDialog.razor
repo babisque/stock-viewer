@@ -1,0 +1,26 @@
+@* Port of PositionDialog.tsx: add a position, or edit one's notes. The dashboard does the Api call. *@
+<Dialog Open="Open" Title="@Title" Description="@Description" OnClose="OnClose">
+    <PositionForm @key="Position?.Id"
+                  Initial="@(Position is null ? PositionFormModel.Empty() : PositionFormModel.FromPosition(Position))"
+                  IsEdit="Position is not null"
+                  OnSubmit="OnSubmit"
+                  OnCancel="OnClose" />
+</Dialog>
+
+@code {
+    [Parameter] public bool Open { get; set; }
+
+    /// <summary>Null = add a new position; otherwise edit this one.</summary>
+    [Parameter] public PortfolioPosition? Position { get; set; }
+
+    /// <summary>Saves the values; throws <see cref="ApiException"/> to show the error in the form. The dashboard closes the dialog on success.</summary>
+    [Parameter] public EventCallback<CreatePositionRequest> OnSubmit { get; set; }
+
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private string Title => Position is null ? "Add position" : $"Edit {Position.Ticker} ({Position.Market})";
+
+    private string Description => Position is null
+        ? "Average price is in the market's currency (BRL for B3, USD for US). It is recorded as the first buy, dated today."
+        : "Quantity and average price come from the transactions.";
+}
